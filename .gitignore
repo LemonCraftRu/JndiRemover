@@ -1,0 +1,20 @@
+# Idea
+out
+*.ipr
+*.iws
+*.iml
+.idea
+.ideaDataSources
+dataSources
+logs
+
+# Gradle
+build
+.gradle
+
+# Остальное
+run
+*.rar
+*.zip
+*.class
+compiled/*.jar

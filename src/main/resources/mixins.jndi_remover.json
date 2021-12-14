@@ -1,0 +1,16 @@
+{
+  "compatibilityLevel": "JAVA_8",
+  "minVersion": "0.7.11",
+  "refmap": "mixins.jndi_remover.refmap.json",
+  "package": "ru.icosider.jndiremover.mixin",
+  "mixins": [
+    "log4j.MixinJndiLookup",
+    "mc.network.MixinPacketBuffer"
+  ],
+  "client": [
+    "mc.MixinMain"
+  ],
+  "server": [
+    "mc.MixinServer"
+  ]
+}

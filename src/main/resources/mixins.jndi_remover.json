@@ -1,6 +1,6 @@
 {
   "compatibilityLevel": "JAVA_8",
-  "minVersion": "0.7.11",
+  "minVersion": "0.8",
   "refmap": "mixins.jndi_remover.refmap.json",
   "package": "ru.icosider.jndiremover.mixin",
   "mixins": [

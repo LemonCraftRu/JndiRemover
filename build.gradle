@@ -3,35 +3,40 @@ buildscript {
         mavenCentral()
         maven {
             name = "forge"
-            url = "https://files.minecraftforge.net/maven"
+            url = "https://maven.minecraftforge.net/"
         }
         maven {
-            name = "sonatype"
-            url = "https://oss.sonatype.org/content/repositories/snapshots/"
+            name = "spongepowered"
+            url = 'https://repo.spongepowered.org/maven'
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
     }
 }
 
 apply plugin: 'java'
-apply plugin: 'forge'
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'org.spongepowered.mixin'
 
 group 'ru.icosider'
 version = "$mc_version-$mod_version"
 
-minecraft.version = mc_version + '-' + forge_version + '-' + mc_version
-
 targetCompatibility = sourceCompatibility = JavaVersion.VERSION_1_8
 compileJava*.options*.encoding = 'UTF-8'
 
-def outSrgFile = tasks.compileJava.temporaryDir.toString() + "/outSrg.srg"
-def outRefMapFile = tasks.compileJava.temporaryDir.toString() + "/mixins.jndi_remover.refmap.json"
+minecraft {
+    mappings channel: 'snapshot', version: '20171003-1.12'
+}
+
+mixin {
+    add sourceSets.main, "mixins.jndi_remover.refmap.json"
+}
 
 configurations {
     shade
-    compile.extendsFrom(shade)
+    implementation.extendsFrom(shade)
 }
 
 repositories {
@@ -43,7 +48,8 @@ repositories {
 }
 
 dependencies {
-    shade('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
+    minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
+    shade('org.spongepowered:mixin:0.8.1-SNAPSHOT') {
         exclude module: 'launchwrapper'
         exclude module: 'guava'
         exclude module: 'gson'
@@ -51,32 +57,32 @@ dependencies {
         exclude module: 'commons-codec'
         exclude module: 'asm-commons'
     }
+    if (System.getProperty("idea.sync.active") != "true")
+        annotationProcessor 'org.spongepowered:mixin:0.8.1:processor'
 }
 
 jar {
     destinationDir = file("$rootDir/compiled")
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-    from outRefMapFile
     exclude "net/minecraft/**"
 
-    manifest.attributes(
-            'FMLCorePluginContainsFMLMod': 'true',
-            'MixinConfigs': 'mixins.jndi_remover.json',
-            'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
-            'TweakOrder': 0
-    )
+    manifest {
+        attributes([
+                "Specification-Title": "jndiremover",
+                "Specification-Vendor": "jndi_remover",
+                "Specification-Version": "1",
+                "Implementation-Title": project.name,
+                "Implementation-Version": "${version}",
+                "Implementation-Vendor" : "jndi_remover",
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                "FMLCorePluginContainsFMLMod": true,
+                "MixinConfigs": "mixins.jndi_remover.json",
+                "TweakClass": "org.spongepowered.asm.launch.MixinTweaker",
+                "TweakOrder": 0
+        ])
+    }
     configurations.shade.each { dep -> from(project.zipTree(dep)) }
 }
 
-reobf {
-    addExtraSrgFile outSrgFile
-}
-
-afterEvaluate {
-    tasks.compileJava.options.compilerArgs += [
-            "-AreobfSrgFile=${tasks.reobf.srg}",
-            "-AoutSrgFile=${outSrgFile}",
-            "-AoutRefMapFile=${outRefMapFile}"
-    ]
-}
+jar.finalizedBy('reobfJar')

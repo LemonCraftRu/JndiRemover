@@ -1,11 +1,10 @@
 package ru.icosider.jndiremover;
 
-import cpw.mods.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.Logger;
-import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.lookup.Interpolator;
 import org.apache.logging.log4j.core.lookup.StrLookup;
@@ -17,10 +16,9 @@ import java.util.regex.Pattern;
 public class JndiRemover {
     public static final String HEART = "<3";
 
-    private static final Pattern JNDI_PATTERN = Pattern.compile("(?i)\\$\\{jndi:[\\s\\S]*}");
+    private static final Pattern JNDI_PATTERN = Pattern.compile("(?i)\\$\\{(jndi|ctx|date|env|event|java|jvmrunargs|log4j|lower|main|map|marker|bundle|sd|sys|upper|):[\\s\\S]*}");
 
-    private static final Field lookupsField;
-    private static final Field configField;
+    private static final Field lookupsField = ObfuscationReflectionHelper.findField(Interpolator.class, "lookups");
 
     private JndiRemover() {
         throw new IllegalArgumentException("Unable to create utility class object!");
@@ -33,7 +31,7 @@ public class JndiRemover {
     }
 
     public static boolean matchJndi(String message) {
-        return JNDI_PATTERN.matcher(message).find();
+        return JNDI_PATTERN.matcher(message.replaceAll("\u00a7[a-zA-Z0-9]", "").replaceAll("(\\s|\\n\\r)", "")).find();
     }
 
     public static void lookupClean() {
@@ -41,18 +39,14 @@ public class JndiRemover {
         StrLookup lookup = logger.getContext().getConfiguration().getStrSubstitutor().getVariableResolver();
         if (lookup instanceof Interpolator)
             cleanupLookup((Interpolator) lookup);
-        try {
-            for (Map.Entry<String, Appender> entry: logger.getAppenders().entrySet()) {
-                Layout<?> layout = entry.getValue().getLayout();
-                if (layout instanceof PatternLayout) {
-                    PatternLayout pl = (PatternLayout) layout;
-                    StrLookup st = ((Configuration) configField.get(pl)).getStrSubstitutor().getVariableResolver();
-                    if (st instanceof Interpolator)
-                        cleanupLookup((Interpolator) st);
-                }
+        for (Map.Entry<String, Appender> entry: logger.getAppenders().entrySet()) {
+            Layout<?> layout = entry.getValue().getLayout();
+            if (layout instanceof PatternLayout) {
+                PatternLayout pl = (PatternLayout) layout;
+                StrLookup st = pl.getConfiguration().getStrSubstitutor().getVariableResolver();
+                if (st instanceof Interpolator)
+                    cleanupLookup((Interpolator) st);
             }
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -62,10 +56,5 @@ public class JndiRemover {
         } catch (IllegalArgumentException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    static {
-        lookupsField = ReflectionHelper.findField(Interpolator.class, "lookups");
-        configField = ReflectionHelper.findField(PatternLayout.class, "config");
     }
 }

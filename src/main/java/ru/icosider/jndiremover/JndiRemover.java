@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 public class JndiRemover {
     public static final String HEART = "<3";
 
-    private static final Pattern JNDI_PATTERN = Pattern.compile("(?i)\\$\\{jndi:[\\s\\S]*}");
+    private static final Pattern JNDI_PATTERN = Pattern.compile("(?i)\\$\\{(jndi|ctx|date|env|event|java|jvmrunargs|log4j|lower|main|map|marker|bundle|sd|sys|upper|):[\\s\\S]*}");
 
     private static final Field lookupsField;
     private static final Field configField;
@@ -33,7 +33,7 @@ public class JndiRemover {
     }
 
     public static boolean matchJndi(String message) {
-        return JNDI_PATTERN.matcher(message).find();
+        return JNDI_PATTERN.matcher(message.replaceAll("\u00a7[a-zA-Z0-9]", "").replaceAll("(\\s|\\n\\r)", "")).find();
     }
 
     public static void lookupClean() {

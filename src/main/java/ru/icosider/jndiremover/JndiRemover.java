@@ -1,71 +1,19 @@
 package ru.icosider.jndiremover;
 
-import cpw.mods.fml.relauncher.ReflectionHelper;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.Layout;
-import org.apache.logging.log4j.core.Logger;
-import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.apache.logging.log4j.core.lookup.Interpolator;
-import org.apache.logging.log4j.core.lookup.StrLookup;
+import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 
-import java.lang.reflect.Field;
-import java.util.Map;
-import java.util.regex.Pattern;
+import static ru.icosider.jndiremover.JndiRemover.MOD_ID;
 
+@Mod(modid = MOD_ID, name = "JndiRemover", version = "1.0.2", acceptableRemoteVersions = "*")
 public class JndiRemover {
-    public static final String HEART = "<3";
+    public static final String MOD_ID = "jndirem";
 
-    private static final Pattern JNDI_PATTERN = Pattern.compile("(?i)\\$\\{(jndi|ctx|date|env|event|java|jvmrunargs|log4j|lower|main|map|marker|bundle|sd|sys|upper|):[\\s\\S]*}");
+    @Mod.Instance(MOD_ID)
+    public static JndiRemover instance;
 
-    private static final Field lookupsField;
-    private static final Field configField;
-
-    private JndiRemover() {
-        throw new IllegalArgumentException("Unable to create utility class object!");
-    }
-
-    public static String replaceJndi(String text) {
-        if (matchJndi(text))
-            return text.replaceAll(JNDI_PATTERN.pattern(), HEART);
-        return text;
-    }
-
-    public static boolean matchJndi(String message) {
-        return JNDI_PATTERN.matcher(message.replaceAll("\u00a7[a-zA-Z0-9]", "").replaceAll("(\\s|\\n\\r)", "")).find();
-    }
-
-    public static void lookupClean() {
-        Logger logger = (Logger) LogManager.getRootLogger();
-        StrLookup lookup = logger.getContext().getConfiguration().getStrSubstitutor().getVariableResolver();
-        if (lookup instanceof Interpolator)
-            cleanupLookup((Interpolator) lookup);
-        try {
-            for (Map.Entry<String, Appender> entry: logger.getAppenders().entrySet()) {
-                Layout<?> layout = entry.getValue().getLayout();
-                if (layout instanceof PatternLayout) {
-                    PatternLayout pl = (PatternLayout) layout;
-                    StrLookup st = ((Configuration) configField.get(pl)).getStrSubstitutor().getVariableResolver();
-                    if (st instanceof Interpolator)
-                        cleanupLookup((Interpolator) st);
-                }
-            }
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static void cleanupLookup(Interpolator lookup) {
-        try {
-            ((Map<?, ?>) lookupsField.get(lookup)).clear();
-        } catch (IllegalArgumentException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    static {
-        lookupsField = ReflectionHelper.findField(Interpolator.class, "lookups");
-        configField = ReflectionHelper.findField(PatternLayout.class, "config");
+    @Mod.EventHandler
+    public void pre(FMLPreInitializationEvent e) {
+        EventListener.INSTANCE.register();
     }
 }

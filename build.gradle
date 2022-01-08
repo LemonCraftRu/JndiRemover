@@ -61,6 +61,7 @@ jar {
     exclude "net/minecraft/**"
 
     manifest.attributes(
+            'ForceLoadAsMod': 'true',
             'FMLCorePluginContainsFMLMod': 'true',
             'MixinConfigs': 'mixins.jndi_remover.json',
             'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',

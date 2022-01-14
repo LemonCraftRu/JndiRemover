@@ -4,7 +4,6 @@
   "refmap": "mixins.jndi_remover.refmap.json",
   "package": "ru.icosider.jndiremover.mixin",
   "mixins": [
-    "log4j.MixinJndiLookup",
     "mc.network.MixinPacketBuffer"
   ],
   "client": [

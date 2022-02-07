@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class RemoverUtil {
-    private static final Pattern JNDI_PATTERN = Pattern.compile("(?i)\\$\\{(jndi|ctx|date|env|event|java|jvmrunargs|log4j|lower|main|map|marker|bundle|sd|sys|upper|):[\\s\\S]*}");
+    private static final Pattern JNDI_PATTERN = Pattern.compile("(?i)\\$\\{(jndi|ctx|date|env|event|java|jvmrunargs|log4j|lower|main|map|marker|bundle|sd|sys|upper|):[\\s\\S]*");
 
     private static final Field LOOKUPS_FIELD = ReflectionHelper.findField(Interpolator.class, "lookups");
     private static final Field CONFIG_FIELD = ReflectionHelper.findField(PatternLayout.class, "config");

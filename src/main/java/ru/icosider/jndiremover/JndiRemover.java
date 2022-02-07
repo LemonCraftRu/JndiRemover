@@ -1,60 +1,13 @@
 package ru.icosider.jndiremover;
 
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.Layout;
-import org.apache.logging.log4j.core.Logger;
-import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.apache.logging.log4j.core.lookup.Interpolator;
-import org.apache.logging.log4j.core.lookup.StrLookup;
+import net.minecraftforge.fml.common.Mod;
 
-import java.lang.reflect.Field;
-import java.util.Map;
-import java.util.regex.Pattern;
+import static ru.icosider.jndiremover.JndiRemover.MOD_ID;
 
+@Mod(modid = MOD_ID, name = "JndiRemover", version = "2.0.2", acceptableRemoteVersions = "*")
 public class JndiRemover {
-    public static final String HEART = "<3";
+    public static final String MOD_ID = "jndirem";
 
-    private static final Pattern JNDI_PATTERN = Pattern.compile("(?i)\\$\\{(jndi|ctx|date|env|event|java|jvmrunargs|log4j|lower|main|map|marker|bundle|sd|sys|upper|):[\\s\\S]*}");
-
-    private static final Field lookupsField = ObfuscationReflectionHelper.findField(Interpolator.class, "lookups");
-
-    private JndiRemover() {
-        throw new IllegalArgumentException("Unable to create utility class object!");
-    }
-
-    public static String replaceJndi(String text) {
-        if (matchJndi(text))
-            return text.replaceAll(JNDI_PATTERN.pattern(), HEART);
-        return text;
-    }
-
-    public static boolean matchJndi(String message) {
-        return JNDI_PATTERN.matcher(message.replaceAll("\u00a7[a-zA-Z0-9]", "").replaceAll("(\\s|\\n\\r)", "")).find();
-    }
-
-    public static void lookupClean() {
-        Logger logger = (Logger) LogManager.getRootLogger();
-        StrLookup lookup = logger.getContext().getConfiguration().getStrSubstitutor().getVariableResolver();
-        if (lookup instanceof Interpolator)
-            cleanupLookup((Interpolator) lookup);
-        for (Map.Entry<String, Appender> entry: logger.getAppenders().entrySet()) {
-            Layout<?> layout = entry.getValue().getLayout();
-            if (layout instanceof PatternLayout) {
-                PatternLayout pl = (PatternLayout) layout;
-                StrLookup st = pl.getConfiguration().getStrSubstitutor().getVariableResolver();
-                if (st instanceof Interpolator)
-                    cleanupLookup((Interpolator) st);
-            }
-        }
-    }
-
-    private static void cleanupLookup(Interpolator lookup) {
-        try {
-            ((Map<?, ?>) lookupsField.get(lookup)).clear();
-        } catch (IllegalArgumentException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    @Mod.Instance(MOD_ID)
+    public static JndiRemover instance;
 }
